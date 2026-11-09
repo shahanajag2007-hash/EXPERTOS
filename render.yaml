@@ -44,7 +44,7 @@ services:
       - key: FLASK_DEBUG
         value: "false"
       - key: CORS_ORIGINS
-        value: https://expertos-frontend.onrender.com
+        value: https://expertos-frontend-jg1a.onrender.com
         # IMPORTANT: after first deploy, update this to your actual frontend URL.
         # You can also set it to "*" temporarily while getting the URL, then restrict it.
 
@@ -101,7 +101,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://expertos-backend.onrender.com
+        value: https://expertos-backend-qaze.onrender.com
         # IMPORTANT: after first deploy, confirm this matches your actual backend URL.
         # Render service names become subdomains: expertos-backend → expertos-backend.onrender.com
         # If you already have a service named expertos-backend, Render may append a suffix.
