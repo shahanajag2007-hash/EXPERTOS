@@ -23,6 +23,7 @@ from xml.etree import ElementTree
 
 from services import db
 from services.consultations import Forbidden, InvalidInput, NotFound
+from services.storage import get_storage
 
 MAX_FILE_BYTES = int(os.getenv("UPLOAD_MAX_MB", "10")) * 1024 * 1024
 MAX_FILES_PER_REQUEST = 5
@@ -335,8 +336,7 @@ def save_upload(owner, filename, data, conversation_id=None):
 
     file_id = str(uuid.uuid4())
     storage_name = uuid.uuid4().hex
-    path = uploads_dir() / storage_name
-    path.write_bytes(data)
+    get_storage().write(storage_name, data)
 
     user_id, client_hash = owner.columns()
     try:
@@ -350,7 +350,7 @@ def save_upload(owner, filename, data, conversation_id=None):
             )
             row = conn.execute("SELECT * FROM uploaded_files WHERE id = ?", (file_id,)).fetchone()
     except Exception:
-        path.unlink(missing_ok=True)
+        get_storage().delete(storage_name)
         raise
     return public(row)
 
@@ -400,16 +400,17 @@ def delete(owner, file_id):
         if row is None or not owner.owns(row):
             raise NotFound("This file could not be found.")
         conn.execute("DELETE FROM uploaded_files WHERE id = ?", (file_id,))
-    (uploads_dir() / row["storage_name"]).unlink(missing_ok=True)
+    get_storage().delete(row["storage_name"])
 
 
 def delete_rows_files(rows):
-    for row in rows:
-        (uploads_dir() / row["storage_name"]).unlink(missing_ok=True)
+    get_storage().delete_many([row["storage_name"] for row in rows])
 
 
 def image_bytes(row):
     try:
-        return (uploads_dir() / row["storage_name"]).read_bytes()
-    except OSError as exc:
+        return get_storage().read(row["storage_name"])
+    except Forbidden:
+        raise Forbidden(f"{row['filename']} is no longer available. Upload it again.")
+    except Exception as exc:
         raise Forbidden(f"{row['filename']} is no longer available. Upload it again.") from exc

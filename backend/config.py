@@ -63,3 +63,8 @@ MODEL = "google/gemini-2.5-flash"
 MAX_TOKENS = 1500
 
 TEMPERATURE = 0.3
+
+# ─── AWS / S3 (optional — only needed when STORAGE_BACKEND=s3) ───────────────
+STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "local")
+AWS_REGION      = os.getenv("AWS_REGION", "us-east-1")
+S3_BUCKET_NAME  = os.getenv("S3_BUCKET_NAME", "")
