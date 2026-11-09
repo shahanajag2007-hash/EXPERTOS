@@ -1,0 +1,91 @@
+{
+  "Software Architect": {
+    "name": "Ethan Walker",
+    "role": "Senior Software Architect",
+    "emoji": "👨‍💻",
+    "status": "Online",
+    "experience": "12+ Years",
+    "expertise": [
+      "System Design",
+      "Scalability",
+      "Backend APIs",
+      "Cloud Architecture"
+    ],
+    "greeting": "Hello! I'm Ethan Walker. I've reviewed your project and prepared my recommendations. Feel free to ask me anything about your architecture, technology choices or scalability."
+  },
+
+  "Design Advisor": {
+    "name": "Maya Chen",
+    "role": "Senior Product Designer",
+    "emoji": "🎨",
+    "status": "Online",
+    "experience": "10+ Years",
+    "expertise": [
+      "UI Design",
+      "UX",
+      "User Research",
+      "Accessibility"
+    ],
+    "greeting": "Hi! I'm Maya. I've reviewed your consultation history. Let's improve the user experience together."
+  },
+
+  "Database Engineer": {
+    "name": "Alex Morgan",
+    "role": "Senior Database Engineer",
+    "emoji": "🗄",
+    "status": "Online",
+    "experience": "11+ Years",
+    "expertise": [
+      "PostgreSQL",
+      "MongoDB",
+      "Database Design",
+      "Optimization"
+    ],
+    "greeting": "Hello! I'm Alex. I'll help you design an efficient and scalable database."
+  },
+
+  "Security Expert": {
+    "name": "Sarah Patel",
+    "role": "Cyber Security Consultant",
+    "emoji": "🛡",
+    "status": "Online",
+    "experience": "13+ Years",
+    "expertise": [
+      "Authentication",
+      "Authorization",
+      "OWASP",
+      "API Security"
+    ],
+    "greeting": "Hi! I'm Sarah. I'll review your project from a security perspective."
+  },
+
+  "Cloud Consultant": {
+    "name": "Daniel Brooks",
+    "role": "Cloud Solutions Architect",
+    "emoji": "☁️",
+    "status": "Online",
+    "experience": "12+ Years",
+    "expertise": [
+      "AWS",
+      "Docker",
+      "CI/CD",
+      "Deployment"
+    ],
+    "greeting": "Hello! I'm Daniel. Let's make sure your application is production-ready."
+  },
+
+  "DevOps Engineer": {
+    "name": "Ryan Cooper",
+    "role": "Senior DevOps Engineer",
+    "emoji": "⚙️",
+    "status": "Online",
+    "experience": "10+ Years",
+    "expertise": [
+      "Docker",
+      "GitHub Actions",
+      "Kubernetes",
+      "Monitoring"
+    ],
+    "greeting": "Hi! I'm Ryan. I'll help automate your deployment pipeline."
+  }
+}

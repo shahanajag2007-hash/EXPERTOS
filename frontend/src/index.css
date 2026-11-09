@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* `dark:` utilities apply when <html> has the .dark class (see src/theme.js). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --page-bg: #F8FAFC;
+  --page-text: #111827;
+  --surface: #ffffff;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  background: var(--page-bg);
+  color: var(--page-text);
+}
+
+/*
+ * Dark theme.
+ *
+ * Tailwind v4 utilities read colours from CSS variables, so the theme is one
+ * palette remap instead of `dark:` classes on every component:
+ *   - the neutral slate and gray scales are inverted (light backgrounds become
+ *     dark, dark text becomes light);
+ *   - pale tints used for badges and notices become translucent dark tints,
+ *     and their accent text is lightened for contrast;
+ *   - white surfaces (`bg-white`) become a dark surface.
+ * `text-white` is untouched, so text on coloured buttons and gradients stays
+ * white. Saturated colours (indigo-600 buttons, gradients) are unchanged.
+ */
+.dark {
+  --page-bg: #0b1120;
+  --page-text: #e5e7eb;
+  --surface: #111827;
+
+  --color-slate-50: #0f172a;
+  --color-slate-100: #1e293b;
+  --color-slate-200: #334155;
+  --color-slate-300: #475569;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #f8fafc;
+
+  --color-gray-50: #111827;
+  --color-gray-100: #1f2937;
+  --color-gray-200: #374151;
+  --color-gray-300: #4b5563;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #a1a8b3;
+  --color-gray-600: #d1d5db;
+  --color-gray-700: #e5e7eb;
+  --color-gray-800: #f3f4f6;
+  --color-gray-900: #f9fafb;
+
+  --color-indigo-50: rgb(67 56 202 / 0.18);
+  --color-indigo-100: rgb(67 56 202 / 0.3);
+  --color-indigo-200: rgb(99 102 241 / 0.45);
+  --color-purple-50: rgb(126 34 206 / 0.2);
+  --color-purple-100: rgb(126 34 206 / 0.3);
+  --color-blue-100: rgb(29 78 216 / 0.3);
+  --color-green-100: rgb(21 128 61 / 0.3);
+  --color-emerald-100: rgb(4 120 87 / 0.3);
+  --color-red-50: rgb(185 28 28 / 0.18);
+  --color-red-100: rgb(185 28 28 / 0.3);
+  --color-red-200: rgb(239 68 68 / 0.4);
+  --color-amber-50: rgb(180 83 9 / 0.2);
+  --color-amber-200: rgb(245 158 11 / 0.4);
+}
+
+.dark .bg-white,
+.dark .hover\:bg-white:hover {
+  background-color: var(--surface);
+}
+
+.dark .bg-white\/90 {
+  background-color: rgb(17 24 39 / 0.9);
+}
+
+.dark .text-indigo-600,
+.dark .text-indigo-700,
+.dark .text-indigo-800,
+.dark .text-indigo-900,
+.dark .hover\:text-indigo-600:hover,
+.dark .hover\:text-indigo-800:hover {
+  color: #a5b4fc;
+}
+
+/* Light-tint text sits on saturated gradients; keep it light even though the
+   matching background tints are remapped above. */
+.dark .text-indigo-100 { color: #e0e7ff; }
+.dark .text-indigo-200 { color: #c7d2fe; }
+
+.dark .text-purple-600 { color: #d8b4fe; }
+.dark .text-blue-700 { color: #93c5fd; }
+.dark .text-green-700,
+.dark .text-emerald-700 { color: #86efac; }
+.dark .text-red-500,
+.dark .text-red-600,
+.dark .text-red-700 { color: #fca5a5; }
+.dark .text-amber-700,
+.dark .text-amber-800 { color: #fcd34d; }
+
+.dark .border-gray-100,
+.dark .border-gray-200 { border-color: #1f2937; }
