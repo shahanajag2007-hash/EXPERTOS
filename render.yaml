@@ -24,16 +24,21 @@ services:
     # safe across multiple workers. --threads 4 allows concurrent requests within
     # one worker (Flask is thread-safe). --timeout 180 covers long AI responses.
     healthCheckPath: /health
-    disk:
-      name: expertos-data
-      mountPath: /data
-      sizeGB: 1                 # 1 GB persistent disk — covers SQLite DB + uploads
+    # NOTE: no persistent disk — Render free instances do not support disks.
+    # The SQLite DB and uploads live on the container's ephemeral filesystem and
+    # are WIPED on every redeploy/restart. To persist data, switch to
+    # plan: starter and add:  disk: {name: expertos-data, mountPath: /data, sizeGB: 1}
+    # then point EXPERTOS_DB_PATH / EXPERTOS_UPLOAD_DIR back at /data.
     envVars:
-      # ── Storage paths (point Flask at the persistent disk) ──────────────
+      # ── Runtime ──────────────────────────────────────────────────────────
+      - key: PYTHON_VERSION
+        value: 3.12.10          # matches local dev; pinned wheels (grpcio, numpy) target 3.12
+
+      # ── Storage paths (EPHEMERAL on the free plan — see note above) ─────
       - key: EXPERTOS_DB_PATH
-        value: /data/expertos.db
+        value: /tmp/expertos-data/expertos.db
       - key: EXPERTOS_UPLOAD_DIR
-        value: /data/uploads
+        value: /tmp/expertos-data/uploads
 
       # ── Production safety ────────────────────────────────────────────────
       - key: FLASK_DEBUG

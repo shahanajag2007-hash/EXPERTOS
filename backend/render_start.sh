@@ -5,8 +5,8 @@ set -e
 
 # Ensure the persistent disk directories exist.
 # EXPERTOS_DB_PATH and EXPERTOS_UPLOAD_DIR are set by render.yaml.
-DB_DIR=$(dirname "${EXPERTOS_DB_PATH:-/data/expertos.db}")
-UPLOAD_DIR="${EXPERTOS_UPLOAD_DIR:-/data/uploads}"
+DB_DIR=$(dirname "${EXPERTOS_DB_PATH:-/tmp/expertos-data/expertos.db}")
+UPLOAD_DIR="${EXPERTOS_UPLOAD_DIR:-/tmp/expertos-data/uploads}"
 
 mkdir -p "$DB_DIR"
 mkdir -p "$UPLOAD_DIR"
