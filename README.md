@@ -7,7 +7,7 @@ can be reopened, documents and screenshots can be uploaded for the experts to
 read, reports can be downloaded, and accounts are optional.
 
 - `frontend/`: React 19 + Vite + Tailwind CSS 4
-- `backend/`: Flask API, SQLite persistence, AI provider routing (OpenRouter first, then Gemini, Groq and Ollama as fallbacks)
+- `backend/`: Flask API, SQLite persistence, AI provider routing (OpenRouter first, then Gemini, Groq and Ollama as fallbacks), Amazon S3 document storage (boto3)
 
 ## Requirements
 
@@ -71,6 +71,20 @@ The frontend calls `http://127.0.0.1:5000` by default. Set `VITE_API_URL` in
 
 API keys stay on the backend and are never sent to the browser. `.env` and the
 database file are git-ignored.
+
+## Amazon S3 File Storage
+
+By default, uploaded documents are stored locally in `backend/data/uploads/`. To store them in Amazon S3 instead, set `STORAGE_BACKEND=s3` and configure the required AWS variables (see [docs/AWS_SETUP.md](docs/AWS_SETUP.md)).
+
+| Variable | Purpose |
+|---|---|
+| `STORAGE_BACKEND` | `local` (default) or `s3` |
+| `S3_BUCKET_NAME` | S3 bucket name (required when `STORAGE_BACKEND=s3`) |
+| `AWS_REGION` | AWS region (default `us-east-1`) |
+| `AWS_ACCESS_KEY_ID` | Access key for local dev (leave empty to use IAM role) |
+| `AWS_SECRET_ACCESS_KEY` | Secret key for local dev (leave empty to use IAM role) |
+
+S3 objects are stored with SSE-S3 encryption and private access. AWS credentials are never sent to the browser or logged.
 
 ## Database
 
@@ -205,3 +219,5 @@ the only check that uses your API quota.
 - Rate limits (ratings, contact, sign-in, uploads, AI requests) are kept in
   memory per process. Run a single backend process, or move them to a shared
   store, before scaling out.
+- When `STORAGE_BACKEND=s3`, S3 upload failures return an error to the user rather than silently falling back to local storage.
+- Existing locally-stored files are not migrated when switching to S3. They remain accessible only from the local filesystem.
