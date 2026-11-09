@@ -15,7 +15,7 @@ google-api-core==2.25.1
 google-auth==2.55.1
 googleapis-common-protos==1.70.0
 grpcio==1.75.1
-grpcio-status==1.75.1
+grpcio-status==1.71.2
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
@@ -28,7 +28,7 @@ numpy==2.3.3
 openai==1.109.1
 packaging==25.0
 proto-plus==1.26.1
-protobuf==6.32.1
+protobuf==5.29.6
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==3.0
@@ -52,8 +52,8 @@ Werkzeug==3.1.4
 gunicorn==23.0.0
 
 # AI provider SDKs used by providers/
-groq
-google-generativeai
+groq==1.5.0
+google-generativeai==0.8.6
 # Verify HTTPS against the Windows/macOS system certificate store (see config.py)
 truststore>=0.10
 # Text extraction from uploaded PDFs (services/files.py)
