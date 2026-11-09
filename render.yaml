@@ -83,9 +83,7 @@ services:
   # ── React Frontend (Static Site) ─────────────────────────────────────────
   - type: web
     name: expertos-frontend
-    runtime: static
-    region: singapore
-    plan: free
+    runtime: static             # static sites are global CDN + free; no region/plan keys
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
