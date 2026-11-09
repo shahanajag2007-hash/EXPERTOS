@@ -1,0 +1,104 @@
+## Render Blueprint — ExpertOS
+## Deploys the Flask backend as a Web Service and the React frontend as a Static Site.
+## Documentation: https://render.com/docs/blueprint-spec
+##
+## HOW TO USE:
+##   1. Push this file to GitHub (already done).
+##   2. In Render dashboard → New → Blueprint → connect your EXPERTOS repo.
+##   3. Render reads this file and creates both services automatically.
+##   4. Set the secret environment variables listed under envVars (marked sync: false)
+##      in the Render dashboard after the blueprint is created.
+
+services:
+
+  # ── Flask Backend ─────────────────────────────────────────────────────────
+  - type: web
+    name: expertos-backend
+    runtime: python
+    region: singapore          # ap-southeast-1 — closest free-tier region to ap-south-1
+    plan: free                  # Free plan has 512 MB RAM, 0.1 CPU; upgrade if needed
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash render_start.sh
+    # Single worker is required: SQLite WAL + in-memory rate limiters are not
+    # safe across multiple workers. --threads 4 allows concurrent requests within
+    # one worker (Flask is thread-safe). --timeout 180 covers long AI responses.
+    healthCheckPath: /health
+    disk:
+      name: expertos-data
+      mountPath: /data
+      sizeGB: 1                 # 1 GB persistent disk — covers SQLite DB + uploads
+    envVars:
+      # ── Storage paths (point Flask at the persistent disk) ──────────────
+      - key: EXPERTOS_DB_PATH
+        value: /data/expertos.db
+      - key: EXPERTOS_UPLOAD_DIR
+        value: /data/uploads
+
+      # ── Production safety ────────────────────────────────────────────────
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        value: https://expertos-frontend.onrender.com
+        # IMPORTANT: after first deploy, update this to your actual frontend URL.
+        # You can also set it to "*" temporarily while getting the URL, then restrict it.
+
+      # ── AI provider keys (set these in the Render dashboard — never commit) ──
+      - key: OPENROUTER_API_KEY
+        sync: false             # Render will prompt you to enter this value
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+
+      # ── AI provider config (safe to commit) ─────────────────────────────
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: OLLAMA_URL
+        value: ""               # Ollama is local-only; disable on Render
+      - key: OPENROUTER_REASONING
+        value: "off"
+      - key: USE_SYSTEM_CERTIFICATES
+        value: "false"          # Render uses standard CA bundle; OS store not needed
+      - key: CONTENT_RETENTION_DAYS
+        value: "30"
+
+      # ── Amazon S3 (optional — only needed if STORAGE_BACKEND=s3) ─────────
+      - key: STORAGE_BACKEND
+        value: local            # Change to "s3" after creating your bucket
+      - key: S3_BUCKET_NAME
+        sync: false             # Set in dashboard when using S3
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: AWS_ACCESS_KEY_ID
+        sync: false             # Set in dashboard (or use IAM role on EC2)
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+
+  # ── React Frontend (Static Site) ─────────────────────────────────────────
+  - type: web
+    name: expertos-frontend
+    runtime: static
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      # React Router: serve index.html for all non-asset paths (client-side routing)
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://expertos-backend.onrender.com
+        # IMPORTANT: after first deploy, confirm this matches your actual backend URL.
+        # Render service names become subdomains: expertos-backend → expertos-backend.onrender.com
+        # If you already have a service named expertos-backend, Render may append a suffix.

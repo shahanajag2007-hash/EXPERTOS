@@ -36,7 +36,12 @@ from services.expert_recommendation import generate_recommendation
 from services.panel_engine import iter_panel, run_panel
 
 app = Flask(__name__)
-CORS(app)
+# CORS_ORIGINS env var restricts allowed origins in production.
+# Leave unset (or set to "*") for local development — wildcard is the default.
+_cors_origins = os.getenv("CORS_ORIGINS", "*")
+if _cors_origins and _cors_origins != "*":
+    _cors_origins = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+CORS(app, origins=_cors_origins)
 # Uploads are checked per file in services/files.py; this caps one request.
 app.config["MAX_CONTENT_LENGTH"] = file_store.MAX_FILES_PER_REQUEST * file_store.MAX_FILE_BYTES + 1024 * 1024
 
