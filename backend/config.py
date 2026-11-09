@@ -25,9 +25,16 @@ if USE_SYSTEM_CERTIFICATES:
         )
 
 # ─── Credentials (never sent to the frontend or logged) ──────────────────────
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# Stripped: a key pasted with a trailing newline/space (easy to do in a hosting
+# dashboard) makes an invalid Authorization header, which the SDKs report only
+# as a vague "Connection error". Empty after stripping means not configured.
+def _secret(name):
+    return (os.getenv(name) or "").strip() or None
+
+
+OPENROUTER_API_KEY = _secret("OPENROUTER_API_KEY")
+GEMINI_API_KEY = _secret("GEMINI_API_KEY")
+GROQ_API_KEY = _secret("GROQ_API_KEY")
 # Groq model used when the router falls back to Groq.
 GROQ_MODEL = os.getenv("GROQ_MODEL", "").strip() or "openai/gpt-oss-120b"
 
