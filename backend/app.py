@@ -508,6 +508,7 @@ def expert_chat_stream():
 # ─── /panel ──────────────────────────────────────────────────────────────────
 
 def _panel_request():
+    owner = auth.require_owner(_owner())   # P1-1: panel requires a client identity
     data        = _json_body()
     expert_keys = data.get("experts") if isinstance(data.get("experts"), list) else []
     expert_keys = [k for k in expert_keys if isinstance(k, str) and k.strip()]
@@ -629,6 +630,10 @@ def knowledge():
 
     if not technology:
         return jsonify({"error": "Technology is required."}), 400
+
+    limited = _ai_rate_limited()
+    if limited:
+        return limited
 
     with metrics.track_operation(metrics.KNOWLEDGE):
         result = get_technology(project, technology, expert)
@@ -974,7 +979,8 @@ if __name__ == "__main__":
     # OneDrive touch file attributes after syncing, which restarted the server
     # mid-request even though no code had changed.
     interpreter_dirs = {sys.base_prefix, sys.prefix, sysconfig.get_paths()["stdlib"]}
-    app.run(debug=True, threaded=True, reloader_type="stat", exclude_patterns=[
+    debug_mode = os.getenv("FLASK_DEBUG", "true").lower() == "true"
+    app.run(debug=debug_mode, threaded=True, reloader_type="stat", exclude_patterns=[
         "*site-packages*", "*__pycache__*", "*.db", "*.db-*",
         *(os.path.join(d, "*") for d in interpreter_dirs),
     ])

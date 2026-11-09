@@ -5,6 +5,7 @@ from config import (
     MAX_TOKENS,
     TEMPERATURE,
 )
+from services.errors import ProviderError, TIMEOUT, CONNECTION, SERVER, EMPTY, UNKNOWN
 
 MODEL = "deepseek-r1:8b"
 
@@ -56,21 +57,29 @@ def generate(
         text = data.get("response")
 
         if text is None:
-            raise Exception(
-                "Ollama returned no response."
-            )
+            raise ProviderError(EMPTY, "Ollama returned no response.")
 
         text = text.strip()
 
         if text == "":
-            raise Exception(
-                "Ollama returned an empty response."
-            )
+            raise ProviderError(EMPTY, "Ollama returned an empty response.")
 
         return text
 
-    except Exception as e:
+    except ProviderError:
+        raise
 
-        raise Exception(
-            f"Ollama Provider Error: {e}"
-        )
+    except requests.exceptions.Timeout:
+        raise ProviderError(TIMEOUT, "Ollama request timed out after 120s.")
+
+    except requests.exceptions.ConnectionError as e:
+        raise ProviderError(CONNECTION, f"Ollama unreachable: {e}")
+
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else None
+        if status is not None and status >= 500:
+            raise ProviderError(SERVER, f"Ollama HTTP {status}")
+        raise ProviderError(UNKNOWN, f"Ollama HTTP error: {e}")
+
+    except Exception as e:
+        raise ProviderError(UNKNOWN, f"Ollama unexpected error: {e}")

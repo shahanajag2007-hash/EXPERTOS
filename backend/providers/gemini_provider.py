@@ -104,9 +104,3 @@ def generate(
 
     except ProviderError:
         raise
-
-    except Exception as e:
-
-        raise Exception(
-            f"Gemini Provider Error: {e}"
-        )

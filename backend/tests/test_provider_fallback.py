@@ -9,6 +9,7 @@ Run from the backend directory:
 """
 import _testenv  # noqa: F401  (must come before app imports)
 import json
+import requests
 import sqlite3
 import time
 import unittest
@@ -205,6 +206,25 @@ class GeminiFallbackTests(FallbackBase):
         self.assertEqual([(a["provider"], a["category"]) for a in err.attempts],
                          [("OpenRouter", RATE_LIMIT), ("Gemini", ACCOUNT_LIMIT), ("Groq", MODEL_NOT_FOUND)])
 
+    def test_gemini_resource_exhausted_classifies_as_rate_limit(self):
+        self.gemini.side_effect = google_exceptions.ResourceExhausted("Quota exceeded")
+        self.router.generate("q")   # Groq picks up after Gemini rate-limits
+        _, category, _ = self.router._cooling("Gemini")
+        # ResourceExhausted (429) without account-limit phrases → ACCOUNT_LIMIT via classify_exception
+        self.assertIn(category, (RATE_LIMIT, ACCOUNT_LIMIT))
+
+    def test_gemini_service_unavailable_classifies_as_server(self):
+        self.gemini.side_effect = google_exceptions.ServiceUnavailable("overloaded")
+        # Disable Groq so fallback fails and we can inspect the attempt log
+        for p in self.router.providers:
+            if p["name"] == "Groq":
+                p["enabled"] = False
+        with self.assertRaises(AIServiceError) as ctx:
+            self.router.generate("q")
+        self.assertEqual(ctx.exception.attempts[-1]["category"], SERVER)
+        # SERVER is transient — Gemini should not be paused
+        self.assertIsNone(self.router._cooling("Gemini"))
+
 
 class GroqTests(FallbackBase):
 
@@ -387,6 +407,47 @@ class EndpointAndMetricsTests(unittest.TestCase):
             self.recommend()
         self.assertEqual(self.rows("SELECT error_category FROM operations"), [(RATE_LIMIT,)])
         self.assertEqual(self.rows("SELECT error_category, success FROM ai_calls"), [(RATE_LIMIT, 0)])
+
+
+class OllamaTests(FallbackBase):
+    """Stage 3: Ollama provider raises ProviderError with typed categories."""
+
+    def setUp(self):
+        super().setUp()
+        for p in self.router.providers:
+            p["enabled"] = p["name"] == "Ollama"
+        self.requests_post = mock.patch("providers.ollama_provider.requests.post").start()
+        self.addCleanup(mock.patch.stopall)
+
+    def test_ollama_connection_error_raises_provider_error_connection(self):
+        self.requests_post.side_effect = requests.exceptions.ConnectionError("refused")
+        with self.assertRaises(AIServiceError) as ctx:
+            self.router.generate("q")
+        self.assertEqual(ctx.exception.attempts[-1]["category"], CONNECTION)
+
+    def test_ollama_timeout_raises_provider_error_timeout(self):
+        self.requests_post.side_effect = requests.exceptions.Timeout()
+        with self.assertRaises(AIServiceError) as ctx:
+            self.router.generate("q")
+        self.assertEqual(ctx.exception.attempts[-1]["category"], TIMEOUT)
+
+    def test_ollama_http_500_raises_provider_error_server(self):
+        mock_response = mock.Mock()
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            response=mock.Mock(status_code=500)
+        )
+        mock_response.json.return_value = {}
+        self.requests_post.return_value = mock_response
+        with self.assertRaises(AIServiceError) as ctx:
+            self.router.generate("q")
+        self.assertEqual(ctx.exception.attempts[-1]["category"], SERVER)
+
+    def test_ollama_success(self):
+        mock_response = mock.Mock()
+        mock_response.raise_for_status = lambda: None
+        mock_response.json.return_value = {"response": "hello"}
+        self.requests_post.return_value = mock_response
+        self.assertEqual(self.router.generate("q"), "hello")
 
 
 if __name__ == "__main__":

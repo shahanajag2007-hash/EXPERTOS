@@ -73,8 +73,9 @@ Project:
 
         return json.loads(text)
 
-    except Exception:
+    except Exception as e:
 
+        print(f"[knowledge_service] JSON parse error for technology='{technology}': {e}")
         return {
             "title": technology,
             "expert": expert,

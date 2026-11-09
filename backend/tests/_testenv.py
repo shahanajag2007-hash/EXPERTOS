@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BACKEND_DIR not in sys.path:
@@ -21,7 +22,7 @@ def fresh_database():
     """Point the app at a new empty database (call from setUp)."""
     from services import db
 
-    path = tempfile.mktemp(suffix=".db", dir=_tmpdir)
+    path = os.path.join(_tmpdir, f"expertos_test_{os.getpid()}_{int(time.monotonic() * 1e6)}.db")
     os.environ["EXPERTOS_DB_PATH"] = path
     db.reset_for_tests()
     db.init_db()

@@ -15,6 +15,7 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app  # noqa: E402
+from app import ai_limiter  # noqa: E402
 from providers import provider_router  # noqa: E402
 from services import panel_engine  # noqa: E402
 from services.errors import AIServiceError  # noqa: E402
@@ -199,6 +200,62 @@ class ProviderRouterTests(unittest.TestCase):
             res = client.post("/analyze", json={"prompt": "A project"})
         self.assertEqual(res.status_code, 503)
         self.assertEqual(res.get_json()["error"], "AI down, try later.")
+
+
+class PanelAuthTests(unittest.TestCase):
+    """Stage 1: /panel and /panel/stream require a client identity."""
+
+    def test_panel_requires_client_id_returns_403(self):
+        client = _testenv.client(app, client_id=None)
+        res = client.post("/panel", json={"problem": "x", "experts": ["Software Architect"]})
+        self.assertEqual(res.status_code, 403)
+
+    def test_panel_succeeds_with_valid_client_id(self):
+        with mock.patch("app.run_panel") as mock_run:
+            mock_run.return_value = {
+                "responses": [{"expert_key": "Software Architect", "status": "success", "response": "ok"}],
+                "synthesis": None,
+                "synthesis_error": None,
+                "successful_count": 1,
+                "failed_count": 0,
+            }
+            res = _testenv.client(app).post(
+                "/panel", json={"problem": "Build a SaaS app", "experts": ["Software Architect"]}
+            )
+        self.assertNotEqual(res.status_code, 403)
+        self.assertNotEqual(res.status_code, 401)
+
+    def test_panel_stream_requires_client_id_returns_403(self):
+        client = _testenv.client(app, client_id=None)
+        res = client.post("/panel/stream", json={"problem": "x", "experts": ["Software Architect"]})
+        self.assertEqual(res.status_code, 403)
+
+    def test_panel_stream_succeeds_with_valid_client_id(self):
+        def fake_iter(expert_keys, problem, context):
+            yield ("done", {
+                "responses": [],
+                "synthesis": None,
+                "synthesis_error": None,
+                "successful_count": 0,
+                "failed_count": 0,
+            })
+
+        with mock.patch("app.iter_panel", side_effect=fake_iter):
+            res = _testenv.client(app).post(
+                "/panel/stream", json={"problem": "Build a SaaS app", "experts": ["Software Architect"]}
+            )
+        self.assertNotEqual(res.status_code, 403)
+        self.assertNotEqual(res.status_code, 401)
+
+
+class KnowledgeTests(unittest.TestCase):
+    """Stage 2: /knowledge checks the AI rate limiter."""
+
+    def test_knowledge_is_rate_limited(self):
+        client = _testenv.client(app)
+        with mock.patch.object(ai_limiter, "allow", return_value=False):
+            res = client.post("/knowledge", json={"technology": "PostgreSQL", "project": "A booking app"})
+        self.assertEqual(res.status_code, 429)
 
 
 if __name__ == "__main__":
